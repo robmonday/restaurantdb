@@ -1,7 +1,36 @@
 body {
-	background-color: #ffffb3
+	background-color: #ffffe6;
+	font-family: "Arial";
+	margin: 15px;
 }
 
-h1, h2, h3, h4 {
+table {
+	width: 500px;
+	background-color: #ead9c7;
+	margin: 10px;
+	padding: 5px;
+}
 
+table:hover {
+	background-color: #f1e4da;
+}
+
+.item-description {
+	color:  #808080;
+	font-style: italic;
+}
+
+.flash-message {
+	background-color: LightGray;
+	max-width: 400px;
+	margin: 10px;
+	padding: 5px;
+}
+
+a {
+	color: #009933;
+}
+
+a:hover {
+	color: #ff0000;
 }
