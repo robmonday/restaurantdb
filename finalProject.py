@@ -11,15 +11,17 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+@app.route('/restaurants/JSON/')
+def restaurantsJSON():
+	restaurants = session.query(Restaurant).all()
+	return jsonify (Restaurants=[restaurant.serialize for restaurant in restaurants])
 
-#Example API Endpoint (GET Request)
 @app.route('/restaurant/<int:restaurant_id>/menu/JSON/')
 def restaurantMenuJSON(restaurant_id):
 	restaurant = session.query(Restaurant).filter_by(id = restaurant_id).one()
 	items = session.query(MenuItem).filter_by(restaurant_id = restaurant_id).all()
 	return jsonify (MenuItems=[i.serialize for i in items])  #here we 'jsonify' the returned output--instead of rendering an HTML template
 
-#Quiz API Endpoint (GET Request)
 @app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/JSON/')
 def restaurantMenuItemJSON(restaurant_id, menu_id):
 	restaurant = session.query(Restaurant).filter_by(id = restaurant_id).one()
@@ -31,19 +33,41 @@ def restaurantMenuItemJSON(restaurant_id, menu_id):
 @app.route('/restaurants/')
 def showRestaurants():
 	restaurants = session.query(Restaurant).all()
-	return render_template('restaurants.html', restaurants = restaurants) #stub
+	return render_template('restaurants.html', restaurants = restaurants) 
 
-@app.route('/restaurant/new/')
+@app.route('/restaurant/new/', methods=['GET','POST'])
 def newRestaurant():
-	return "newRestaurant" #render_template('newRestaurant.html') #stub
+	if request.method == 'POST':
+		newRest = Restaurant(name=request.form['name'])
+		session.add(newRest)
+		session.commit()
+		flash('New restaurant created')
+		return redirect(url_for('showRestaurants'))
+	else:
+		return render_template('newRestaurant.html')
 
-@app.route('/restaurant/edit/')
-def editRestaurant():
-	return "editRestaurant" #render_template('editRestaurant.html') #stub
+@app.route('/restaurant/<int:restaurant_id>/edit/', methods=['GET','POST'])
+def editRestaurant(restaurant_id):
+	editRest = session.query(Restaurant).filter_by(id = restaurant_id).one()
+	if request.method == 'POST':
+		editRest.name = request.form['name']
+		session.add(editRest)
+		session.commit()
+		flash('Restaurant edited')
+		return redirect(url_for('showRestaurants'))
+	else:
+		return render_template('editRestaurant.html', restaurant_id = restaurant_id, editRest = editRest)
 
-@app.route('/restaurant/delete/')
-def deleteRestaurant():
-	return "deleteRestaurant" #render_template('deleteRestaurant.html') #stub
+@app.route('/restaurant/<int:restaurant_id>/delete/', methods=['GET','POST'])
+def deleteRestaurant(restaurant_id):
+	deleteRest = session.query(Restaurant).filter_by(id = restaurant_id).one()
+	if request.method == 'POST':
+		session.delete(deleteRest)
+		session.commit()
+		flash('Restaurant deleted')
+		return redirect(url_for('showRestaurants'))
+	else:
+		return render_template('deleteRestaurant.html', restaurant_id = restaurant_id, deleteRest=deleteRest) #stub
 
 @app.route('/restaurant/<int:restaurant_id>/')
 @app.route('/restaurant/<int:restaurant_id>/menu/')
@@ -51,8 +75,6 @@ def restaurantMenu(restaurant_id):
     restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     items = session.query(MenuItem).filter_by(restaurant_id=restaurant.id)
     return render_template('menu.html', restaurant=restaurant, items=items)
-
-# Task 1: Create route for newMenuItem function here
 
 @app.route('/restaurant/<int:restaurant_id>/menu/new/', methods=['GET','POST'])
 def newMenuItem(restaurant_id):
@@ -67,7 +89,6 @@ def newMenuItem(restaurant_id):
 	else:
 		return render_template('newmenuitem.html', restaurant_id=restaurant_id)
 
-# Task 2: Create route for editMenuItem function here
 
 @app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/edit/', methods=['GET','POST'])
 def editMenuItem(restaurant_id, menu_id):
@@ -89,7 +110,6 @@ def editMenuItem(restaurant_id, menu_id):
 	else:
 		return render_template('editmenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, i=editedItem)
 
-# Task 3: Create a route for deleteMenuItem function here
 
 @app.route('/restaurants/<int:restaurant_id>/menu/<int:menu_id>/delete/', methods=['GET','POST'])
 def deleteMenuItem(restaurant_id, menu_id):
