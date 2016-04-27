@@ -7,8 +7,15 @@
 	<h3>Edit Menu Item</h3>
 	<form action="{{url_for('editMenuItem', restaurant_id=restaurant_id, menu_id=menu_id, item_id = i)}}" method = 'POST'>
 		<p>Name:</p>
-		<input type='text' size='30' placeholder='{{i.name}}' name='name' >
-		<input type='Submit' value='Edit'> <a href="{{url_for('restaurantMenu', restaurant_id = restaurant_id)}}">Cancel</a>
+		<input type='text' size='30' placeholder='{{i.name}}' name='name'>
+		<p>Price:</p>
+		<input type='text' size='30' placeholder='{{i.price}}' name='price'>
+		<p>Course:</p>
+		<input type='text' size='30' placeholder='{{i.course}}' name='course'>
+		<p>Description:</p>
+		<input type='text' size='100' placeholder='{{i.description}}' name='description'>
+		<p>
+		<input type='submit' value='Edit'> <a href="{{url_for('restaurantMenu', restaurant_id = restaurant_id)}}">Cancel</a>
 	</form>
 
 </body></HTML>
