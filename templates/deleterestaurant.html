@@ -4,15 +4,10 @@
 </head>
 <body>
 
-<h3> Are you sure you want to delete {{}}? </h3>
+<h3> Are you sure you want to delete {{deleteRest.name}}? </h3>
 
-<form action="{{ url_for('deleteRestaurant',restaurant_id = item.restaurant_id)}}" method = 'post'>
-
-<input type='submit', value = 'Delete'>
-
-
-
-
+<form action="{{ url_for('deleteRestaurant',restaurant_id = deleteRest.id)}}" method = 'post'>
+	<input type='submit', value = 'Delete'>
 </form>
 
 <a href = "{{url_for('restaurantMenu', restaurant_id=restaurant_id)}}"> Cancel </a>
