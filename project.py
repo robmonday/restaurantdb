@@ -13,22 +13,39 @@ session = DBSession()
 
 
 #Example API Endpoint (GET Request)
-@app.route('/restaurants/<int:restaurant_id>/menu/JSON/')
+@app.route('/restaurant/<int:restaurant_id>/menu/JSON/')
 def restaurantMenuJSON(restaurant_id):
 	restaurant = session.query(Restaurant).filter_by(id = restaurant_id).one()
 	items = session.query(MenuItem).filter_by(restaurant_id = restaurant_id).all()
 	return jsonify (MenuItems=[i.serialize for i in items])  #here we 'jsonify' the returned output--instead of rendering an HTML template
 
 #Quiz API Endpoint (GET Request)
-@app.route('/restaurants/<int:restaurant_id>/menu/<int:menu_id>/JSON/')
+@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/JSON/')
 def restaurantMenuItemJSON(restaurant_id, menu_id):
 	restaurant = session.query(Restaurant).filter_by(id = restaurant_id).one()
 	item = session.query(MenuItem).filter_by(id = menu_id).one()
 	return jsonify (MenuItem=[item.serialize])
 
-
 @app.route('/')
-@app.route('/restaurants/<int:restaurant_id>/')
+@app.route('/restaurant/')
+@app.route('/restaurants/')
+def showRestaurants():
+	return "showRestaurants" #render_template('restaurants.html') #stub
+
+@app.route('/restaurant/new/')
+def newRestaurant():
+	return "newRestaurant" #render_template('newRestaurant.html') #stub
+
+@app.route('/restaurant/edit/')
+def editRestaurant():
+	return "editRestaurant" #render_template('editRestaurant.html') #stub
+
+@app.route('/restaurant/delete/')
+def deleteRestaurant():
+	return "deleteRestaurant" #render_template('deleteRestaurant.html') #stub
+
+@app.route('/restaurant/<int:restaurant_id>/')
+@app.route('/restaurant/<int:restaurant_id>/menu/')
 def restaurantMenu(restaurant_id):
     restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     items = session.query(MenuItem).filter_by(restaurant_id=restaurant.id)
@@ -36,7 +53,7 @@ def restaurantMenu(restaurant_id):
 
 # Task 1: Create route for newMenuItem function here
 
-@app.route('/restaurants/<int:restaurant_id>/new/', methods=['GET','POST'])
+@app.route('/restaurant/<int:restaurant_id>/menu/new/', methods=['GET','POST'])
 def newMenuItem(restaurant_id):
 	if request.method == 'POST':
 		newItem = MenuItem(name=request.form['name'], price=request.form['price'], \
@@ -51,7 +68,7 @@ def newMenuItem(restaurant_id):
 
 # Task 2: Create route for editMenuItem function here
 
-@app.route('/restaurants/<int:restaurant_id>/<int:menu_id>/edit/', methods=['GET','POST'])
+@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/edit/', methods=['GET','POST'])
 def editMenuItem(restaurant_id, menu_id):
 	editedItem = session.query(MenuItem).filter_by(id=menu_id).one()
 	if request.method == 'POST':
@@ -73,7 +90,7 @@ def editMenuItem(restaurant_id, menu_id):
 
 # Task 3: Create a route for deleteMenuItem function here
 
-@app.route('/restaurants/<int:restaurant_id>/<int:menu_id>/delete/', methods=['GET','POST'])
+@app.route('/restaurants/<int:restaurant_id>/menu/<int:menu_id>/delete/', methods=['GET','POST'])
 def deleteMenuItem(restaurant_id, menu_id):
     deletedItem = session.query(MenuItem).filter_by(id=menu_id).one()
     if request.method == 'POST':

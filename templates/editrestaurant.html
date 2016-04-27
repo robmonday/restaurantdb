@@ -1,0 +1,15 @@
+<HTML>
+<head>
+	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+	
+	<h3>Edit Restaurant</h3>
+	<form action="{{url_for('editRestaurant', restaurant_id=restaurant_id, ...)}}" method = 'POST'>
+		<p>Name:</p>
+		<input type='text' size='30' placeholder='{{i.name}}' name='name'>
+		<p>
+		<input type='submit' value='Edit'> <a href="{{url_for('restaurantMenu', restaurant_id = restaurant_id)}}">Cancel</a>
+	</form>
+
+</body></HTML>
