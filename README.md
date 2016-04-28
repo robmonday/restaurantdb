@@ -1,7 +1,6 @@
-#Udacity Full Stack Project - Restaurant Menu
+#Restaurant Menu - Udacity Full Stack Project
 
 This code was created as part of an assignment for the Udacity Fullstack Nanodegree.
-
 
 ##Installation
 <ol>
@@ -10,7 +9,6 @@ This code was created as part of an assignment for the Udacity Fullstack Nanodeg
 	<li>Run finalProject.py to initialize server</li>
 	<li>Using a web browser, navigate to localhost:5000</li>
 </ol>
-
 
 ##MIT License
 
