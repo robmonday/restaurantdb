@@ -5,7 +5,7 @@ This code was created as part of an assignment for the Udacity Fullstack Nanodeg
 ##Installation
 <ol>
 	<li>Run database-setup.py to create database</li>
-	<li>Run lotsofmenus.py to populate the database with data</li>
+	<li>Run lotsofmenus_withusers.py to populate the database with data</li>
 	<li>Run finalProject.py to initialize server</li>
 	<li>Using a web browser, navigate to localhost:5000</li>
 </ol>
