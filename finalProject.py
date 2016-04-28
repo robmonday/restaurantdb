@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Restaurant, MenuItem
+from database_setup import Base, Restaurant, MenuItem, User
 
 app = Flask(__name__)
 
@@ -134,6 +134,27 @@ def deleteMenuItem(restaurant_id, menu_id):
     else:
     	return render_template('deletemenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, item=deletedItem)
 
+def createUser(login_session):
+	newUser = User(name = login_session['username'], email = login_session['email'], picture = login_session['picture'])
+	session.add(newUser)
+	session.commit()
+	user = session.query(User).filter_by(email = login_session['email']).one()
+	return user.id
+
+def getUserInfo(user_id):
+	"""Pass in user ID, and function returns associated user object"""
+	user = session.query(User).filter_by(id = user_id).one()
+	return user
+
+def getUserID(email):
+	"""Pass in user email, and function returns user ID (if email exists in DB)"""
+	try:
+		user = session.query(User).filter_by(email = email).one()
+		return user.id
+	except:
+		return None
+	
+	return user
 
 if __name__ == '__main__':
 	app.secret_key = 'super_secret_key'
