@@ -1,14 +1,14 @@
-#Project 3
+#Udacity Full Stack Project - Restaurant Menu
 
-Overview text...
-
+This code was created as part of an assignment for the Udacity Fullstack Nanodegree.
 
 
 ##Installation
 <ol>
-	<li>Step One</li>
-	<li>Step Two</li>
-	<li>Step Three</li>
+	<li>Run database-setup.py to create database</li>
+	<li>Run lotsofmenus.py to populate the database with data</li>
+	<li>Run finalProject.py to initialize server</li>
+	<li>Using a web browser, navigate to localhost:5000</li>
 </ol>
 
 
