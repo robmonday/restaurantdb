@@ -5,11 +5,23 @@ from database_setup import Base, Restaurant, MenuItem
 
 app = Flask(__name__)
 
+#New Imports for this Step
+from flask import session as login_session
+import random, string
+
 engine = create_engine('sqlite:///restaurantmenu.db')
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+# Create a state token to prevent request forgery.
+# Store it in the sesison for later validation
+@app.route('/login')
+def showLogin():
+	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
+	login_session['state'] = state
+	return render_template('login.html')
 
 @app.route('/restaurants/JSON/')
 def restaurantsJSON():
