@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Restaurant, MenuItem  #, User
+from database_setup import Base, Restaurant, MenuItem, User
 
 app = Flask(__name__)
 
@@ -40,8 +40,6 @@ def gconnect():
         response = make_response(json.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
-	print request.args.get('state') #rob
-	print login_session['state'] #rob
     # Obtain authorization code
     code = request.data
 
@@ -105,6 +103,19 @@ def gconnect():
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
 
+    # see if user email exists, if not make a new user
+    # user_records = session.query(User).filter_by(email=login_session['email']).all()
+    # if (len(user_records)<1):
+    # 	print "New user in database"
+    # else:
+    # 	print "Existing user in database"
+
+    # Store user_id for login session:  see if user email exists, if not make a new user
+    user_id = getUserID(login_session['email'])
+    if not user_id:
+    	user_id = createUser(login_session) 
+    login_session['user_id'] = user_id
+
     output = ''
     output += '<h1>Welcome, '
     output += login_session['username']
@@ -116,6 +127,26 @@ def gconnect():
     print "done!"
     return output
 
+def createUser(login_session):
+	"""Create new user in database from login session, then return user ID"""
+	newUser = User(name = login_session['username'], email = login_session['email'], picture = login_session['picture'])
+	session.add(newUser)
+	session.commit()
+	user = session.query(User).filter_by(email = login_session['email']).one()
+	return user.id
+
+def getUserInfo(user_id):
+	"""Pass in user ID, and function returns associated user object"""
+	user = session.query(User).filter_by(id = user_id).one()
+	return user
+
+def getUserID(email):
+	"""Pass in user email, and function returns user ID (if email exists in DB)"""
+	try:
+		user = session.query(User).filter_by(email = email).one()
+		return user.id
+	except:
+		return None
 
 
 @app.route('/restaurants/JSON/')
@@ -140,12 +171,16 @@ def restaurantMenuItemJSON(restaurant_id, menu_id):
 @app.route('/restaurants/')
 def showRestaurants():
 	restaurants = session.query(Restaurant).all()
-	return render_template('restaurants.html', restaurants=restaurants) 
+	return render_template('restaurants.html', restaurants=restaurants)
+	# if createUser(login_session) == ??: # if user id of session == restaurant record owner then render owner template
+	# 	return render_template('restaurants.html', restaurants=restaurants) 
+	# else: #otherwise, just render the public template
+	# 	return render_template('publicrestaurants.html', restaurants=restaurants)
 
 @app.route('/restaurant/new/', methods=['GET','POST'])
 def newRestaurant():
 	if request.method == 'POST':
-		newRest = Restaurant(name=request.form['name'])
+		newRest = Restaurant(name=request.form['name'], user_id=login_session['user_id'])
 		session.add(newRest)
 		session.commit()
 		flash('New restaurant created')
@@ -181,14 +216,20 @@ def deleteRestaurant(restaurant_id):
 def restaurantMenu(restaurant_id):
     restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     items = session.query(MenuItem).filter_by(restaurant_id=restaurant.id)
-    return render_template('menu.html', restaurant=restaurant, items=items)
+    creator = getUserInfo(restaurant.user_id)
+    if False: # if user id of session == restaurant record owner then render owner template
+    	print "rendering owner template..."
+    	return render_template('menu.html', restaurant=restaurant, items=items, creator = creator)
+    else: # otherwise render public template
+    	print "rendering public template..."
+    	return render_template('publicmenu.html', restaurant=restaurant, items=items, creator = creator)
 
 @app.route('/restaurant/<int:restaurant_id>/menu/new/', methods=['GET','POST'])
 def newMenuItem(restaurant_id):
 	if request.method == 'POST':
 		newItem = MenuItem(name=request.form['name'], price=request.form['price'], \
 			course=request.form['course'], description=request.form['description'], \
-			restaurant_id=restaurant_id)
+			restaurant_id=restaurant_id, user_id=login_session['user_id'])
 		session.add(newItem)
 		session.commit()
 		flash('New menu item created')
@@ -228,28 +269,6 @@ def deleteMenuItem(restaurant_id, menu_id):
     	return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
     else:
     	return render_template('deletemenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, item=deletedItem)
-
-def createUser(login_session):
-	newUser = User(name = login_session['username'], email = login_session['email'], picture = login_session['picture'])
-	session.add(newUser)
-	session.commit()
-	user = session.query(User).filter_by(email = login_session['email']).one()
-	return user.id
-
-def getUserInfo(user_id):
-	"""Pass in user ID, and function returns associated user object"""
-	user = session.query(User).filter_by(id = user_id).one()
-	return user
-
-def getUserID(email):
-	"""Pass in user email, and function returns user ID (if email exists in DB)"""
-	try:
-		user = session.query(User).filter_by(email = email).one()
-		return user.id
-	except:
-		return None
-	
-	return user
 
 if __name__ == '__main__':
 	app.secret_key = 'super_secret_key'
