@@ -25,6 +25,7 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 # Create anti-forgery state token
+@app.route('/')
 @app.route('/login/')
 def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
@@ -132,7 +133,13 @@ def createUser(login_session):
 	newUser = User(name = login_session['username'], email = login_session['email'], picture = login_session['picture'])
 	session.add(newUser)
 	session.commit()
-	user = session.query(User).filter_by(email = login_session['email']).one()
+	# user = session.query(User).filter_by(email = login_session['email']).one()
+	user = session.query(User).filter_by(email = login_session['email']).all()[0]
+
+	# users = session.query(User).filter_by(email = login_session['email']).all() #Rob
+	# for u in users:  #Rob
+	# 	print u.id, u.name, u.email  #Rob
+
 	return user.id
 
 def getUserInfo(user_id):
@@ -166,7 +173,6 @@ def restaurantMenuItemJSON(restaurant_id, menu_id):
 	item = session.query(MenuItem).filter_by(id=menu_id).one()
 	return jsonify (MenuItem=[item.serialize])
 
-@app.route('/')
 @app.route('/restaurant/')
 @app.route('/restaurants/')
 def showRestaurants():
@@ -191,25 +197,35 @@ def newRestaurant():
 @app.route('/restaurant/<int:restaurant_id>/edit/', methods=['GET','POST'])
 def editRestaurant(restaurant_id):
 	editRest = session.query(Restaurant).filter_by(id=restaurant_id).one()
-	if request.method == 'POST':
-		editRest.name = request.form['name']
-		session.add(editRest)
-		session.commit()
-		flash('Restaurant edited')
-		return redirect(url_for('showRestaurants'))
+	creator = getUserInfo(editRest.user_id)
+	session_user = createUser(login_session)
+	if session_user == editRest.user_id:
+		if request.method == 'POST':
+			editRest.name = request.form['name']
+			session.add(editRest)
+			session.commit()
+			flash('Restaurant edited')
+			return redirect(url_for('showRestaurants'))
+		else:
+			return render_template('editRestaurant.html', restaurant_id=restaurant_id, editRest=editRest)
 	else:
-		return render_template('editRestaurant.html', restaurant_id=restaurant_id, editRest=editRest)
+		return ("<script>function myFunction(){alert('You are not authorized to edit this restaurant')}</script><body onload='myFunction()'>")
 
 @app.route('/restaurant/<int:restaurant_id>/delete/', methods=['GET','POST'])
 def deleteRestaurant(restaurant_id):
 	deleteRest = session.query(Restaurant).filter_by(id=restaurant_id).one()
-	if request.method == 'POST':
-		session.delete(deleteRest)
-		session.commit()
-		flash('Restaurant deleted')
-		return redirect(url_for('showRestaurants'))
+	creator = getUserInfo(deleteRest.user_id)
+	session_user = createUser(login_session)
+	if session_user == deleteRest.user_id:
+		if request.method == 'POST':
+			session.delete(deleteRest)
+			session.commit()
+			flash('Restaurant deleted')
+			return redirect(url_for('showRestaurants'))
+		else:
+			return render_template('deleteRestaurant.html', restaurant_id=restaurant_id, deleteRest=deleteRest)
 	else:
-		return render_template('deleteRestaurant.html', restaurant_id=restaurant_id, deleteRest=deleteRest)
+		return ("<script>function myFunction(){alert('You are not authorized to delete this restaurant')}</script><body onload='myFunction()'>")
 
 @app.route('/restaurant/<int:restaurant_id>/')
 @app.route('/restaurant/<int:restaurant_id>/menu/')
@@ -217,58 +233,73 @@ def restaurantMenu(restaurant_id):
     restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     items = session.query(MenuItem).filter_by(restaurant_id=restaurant.id)
     creator = getUserInfo(restaurant.user_id)
-    if False: # if user id of session == restaurant record owner then render owner template
-    	print "rendering owner template..."
+    session_user = createUser(login_session)
+    if session_user != restaurant.user_id: # if user id of session == restaurant record owner then render owner template
+    	print "rendering owner template..." #rob
     	return render_template('menu.html', restaurant=restaurant, items=items, creator = creator)
     else: # otherwise render public template
-    	print "rendering public template..."
+    	print "rendering public template..." #rob
     	return render_template('publicmenu.html', restaurant=restaurant, items=items, creator = creator)
 
 @app.route('/restaurant/<int:restaurant_id>/menu/new/', methods=['GET','POST'])
 def newMenuItem(restaurant_id):
-	if request.method == 'POST':
-		newItem = MenuItem(name=request.form['name'], price=request.form['price'], \
-			course=request.form['course'], description=request.form['description'], \
-			restaurant_id=restaurant_id, user_id=login_session['user_id'])
-		session.add(newItem)
-		session.commit()
-		flash('New menu item created')
-		return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
+	restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+	creator = getUserInfo(restaurant.user_id)
+	session_user = createUser(login_session)
+	if session_user == restaurant.user_id:	
+		if request.method == 'POST':
+			session.add(newItem)
+			session.commit()
+			flash('New menu item created')
+			return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
+		else:
+			return render_template('newmenuitem.html', restaurant_id=restaurant_id)
 	else:
-		return render_template('newmenuitem.html', restaurant_id=restaurant_id)
+		return ("<script>function myFunction(){alert('You are not authorized to change this menu')}</script><body onload='myFunction()'>")
 
 
 @app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/edit/', methods=['GET','POST'])
 def editMenuItem(restaurant_id, menu_id):
+	restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+	creator = getUserInfo(restaurant.user_id)
+	session_user = createUser(login_session)	
 	editedItem = session.query(MenuItem).filter_by(id=menu_id).one()
-	if request.method == 'POST':
-		if request.form['name']:
-			editedItem.name = request.form['name']
-		if request.form['price']:
-			editedItem.price = request.form['price']
-		if request.form['course']:
-			editedItem.course = request.form['course']
-		if request.form['description']:
-			editedItem.description = request.form['description']
+	if session_user == restaurant.user_id:
+		if request.method == 'POST':
+			if request.form['name']:
+				editedItem.name = request.form['name']
+			if request.form['price']:
+				editedItem.price = request.form['price']
+			if request.form['course']:
+				editedItem.course = request.form['course']
+			if request.form['description']:
+				editedItem.description = request.form['description']
 
-		session.add(editedItem)
-		session.commit()
-		flash('Menu item edited')
-		return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
+			session.add(editedItem)
+			session.commit()
+			flash('Menu item edited')
+			return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
+		else:
+			return render_template('editmenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, i=editedItem)
 	else:
-		return render_template('editmenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, i=editedItem)
-
+		return ("<script>function myFunction(){alert('You are not authorized to change this menu')}</script><body onload='myFunction()'>")
 
 @app.route('/restaurants/<int:restaurant_id>/menu/<int:menu_id>/delete/', methods=['GET','POST'])
 def deleteMenuItem(restaurant_id, menu_id):
-    deletedItem = session.query(MenuItem).filter_by(id=menu_id).one()
-    if request.method == 'POST':
-    	session.delete(deletedItem)
-    	session.commit()
-    	flash('Menu item deleted')    	
-    	return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
-    else:
-    	return render_template('deletemenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, item=deletedItem)
+	restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+	creator = getUserInfo(restaurant.user_id)
+	session_user = createUser(login_session)
+	deletedItem = session.query(MenuItem).filter_by(id=menu_id).one()
+	if session_user == restaurant.user_id:
+		if request.method == 'POST':
+			session.delete(deletedItem)
+			session.commit()
+			flash('Menu item deleted')
+			return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
+		else:
+			return render_template('deletemenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, item=deletedItem)
+	else:
+		return ("<script>function myFunction(){alert('You are not authorized to change this menu')}</script><body onload='myFunction()'>")
 
 if __name__ == '__main__':
 	app.secret_key = 'super_secret_key'

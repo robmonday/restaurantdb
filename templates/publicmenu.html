@@ -12,7 +12,7 @@
 	{% endif %}
 {% endwith %}
 
-<p><a href="{{url_for('showRestaurants', restaurant_id = restaurant.id)}}">See All Restaurants</a>  |  <a href="{{url_for('newMenuItem', restaurant_id = restaurant.id)}}">Create New Menu Item</a></p>
+<p><a href="{{url_for('showRestaurants', restaurant_id = restaurant.id)}}">See All Restaurants</a></p>
 
 {% for i in items %}
 
